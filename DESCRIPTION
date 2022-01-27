@@ -1,0 +1,11 @@
+Package: calibrate.sonar
+Type: Package
+Title: Functions for calibrating the quadrupole isolation range for waters sonar acquisition.
+Version: 0.1.0
+Author: Corey Broeckling
+Maintainer: Corey Broeckling <corey.broeckling@colostate.edu>
+Description: Reliance on Apex3d from Waters, but enables easy and flexible calibration of all SONAR acquisition options
+License: GNU GPLv3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
