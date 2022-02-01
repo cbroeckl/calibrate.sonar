@@ -6,12 +6,13 @@
 \usage{
 generate.sonar.calibration(
  
-    raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_016.raw",
+    raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_012.raw",
   apex3d.dir = "C:/Users/cbroeckl/Documents/SONAR/lib",
   low.energy.function = 2,
   rt.range = c(2, 12),
   cal.out = "cal.out.csv",
-  filter = TRUE
+  filter = TRUE,
+  filter.range = 0.04
 )
 }
 \arguments{
@@ -23,9 +24,11 @@ generate.sonar.calibration(
 
 \item{rt.range}{vector of length two.  i.e. c(2,8).  Retention time range, in minutes, for calibration data to be generated on.}
 
-\item{cal.out}{numeric.  the ratio of isotope signal (all isotopes) divided by total spectrum signal * 100 much be greated than minPercentSignal to evaluate charge state. Value should be between 0 and 100.}
+\item{cal.out}{ile name or path to export CSV file to.  If you have an existing file and want to append the data, enter full file path/name to that file, and new data will be appended to the same csv file.}
 
-\item{filter}{file name or path to export CSV file to.  If you have an existing file and want to append the data, enter full file path/name to that file, and new data will be appended to the same csv file.}
+\item{filter}{logical.  If TRUE (default), calculate approximate sonar bin to mass relationship based on method settings.  Calculate ratio of actual vs predicted bin and express as a proportion.  1 = perfect prediction. Ratio values outside 1 +/ filter.range value are removed before calibrating.}
+
+\item{filter.range}{numeric. default = 0.1.  Range (as a proportion) of drift bin assignment for filtering.}
 }
 \value{
 returns an R object which is a data from containing calibration information.
@@ -42,5 +45,5 @@ This function uses Apex3D64.exe, distributed by Waters Corp, to perform 4d peak 
 Corey Broeckling
 }
 \concept{Waters SONAR}
-\concept{data-indepdenent MS/MS}
+\concept{data-independent MS/MS}
 \concept{mass spectrometry}
