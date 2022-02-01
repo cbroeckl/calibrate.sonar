@@ -25,7 +25,7 @@ generate.sonar.calibration <- function(
   rt.range = c(2,12),
   cal.out = "cal.out.csv",
   filter = TRUE,
-  filter.range = 0.04
+  filter.range = 0.1
 ) {
 
   if(!file.exists(raw.file)) {
@@ -217,12 +217,12 @@ generate.sonar.calibration <- function(
     if(length(rm.pts) > 0) {
       cols[rm.pts] <- 2 
     }
-    plot(d$m_z, (d$mobility/pred.mobility), col = cols, xlab = "m/z", ylab = "actual vs predicted sonar bin", pch = 19, cex = 0.25, main = "pre-calibration filtering")
+    plot(d$m_z, (d$mobility/pred.mobility), col = cols, xlab = "m/z", ylab = "actual vs predicted sonar bin", pch = 19, cex = 0.5, main = "pre-calibration filtering")
     
     if(length(rm.pts) > 0) {
       d <- d[-rm.pts,]
     }
-    plot(d$m_z, (d$mobility/pred.mobility[-rm.pts]), xlab = "m/z", ylab = "actual vs predicted sonar bin", pch = 19, cex = 0.25, main = "outliers removed")
+    plot(d$m_z, (d$mobility/pred.mobility[-rm.pts]), xlab = "m/z", ylab = "actual vs predicted sonar bin", pch = 19, cex = 0.5, main = "outliers removed")
     
   }
 
@@ -231,7 +231,7 @@ generate.sonar.calibration <- function(
   fit.start <- lm(d$atDrift1Start ~ d$m_z)
   fit.stop <- lm(d$atDrift1Stop ~ d$m_z)
 
-  plot(d$m_z, d$mobility, pch = 19, col = 1, cex = 0.25,
+  plot(d$m_z, d$mobility, pch = 19, col = 1, cex = 0.5,
          xlab = "mz", ylab = "sonar.bin", main = "sonar calibration")
   legend(x = "topleft", legend = c("low.mass.limit", "center.mass", "high.mass.limit"), text.col = c(4,1,2), bty = "n", cex = 1)
   points(abline(fit.mobility), col = 1)
@@ -239,13 +239,13 @@ generate.sonar.calibration <- function(
   slope.mid <- round(as.numeric(fit.mobility$coefficients[2]), digits = 5)
 
 
-  points(d$m_z, d$atDrift1Start, pch = 19, col = 2, cex = 0.25)
+  points(d$m_z, d$atDrift1Start, pch = 19, col = 2, cex = 0.5)
   points(abline(fit.start), col = 2)
   intercept.start <- round(as.numeric(fit.start$coefficients[1]), digits =5)
   slope.start <- round(as.numeric(fit.start$coefficients[2]), digits = 5)
 
 
-  points(d$m_z, d$atDrift1Stop, pch = 19, col = 4, cex = 0.25)
+  points(d$m_z, d$atDrift1Stop, pch = 19, col = 4, cex = 0.5)
   points(abline(fit.stop), col = 4)
   intercept.stop <- round(as.numeric(fit.stop$coefficients[1]), digits =5)
   slope.stop <- round(as.numeric(fit.stop$coefficients[2]), digits = 5)
@@ -267,7 +267,7 @@ generate.sonar.calibration <- function(
     warning("the minimum r-squared values is less than 0.995, please consider refining peak detection", '\n')
   }
 
-  plot(fit.mobility$model$'d$mobility', fit.mobility$residuals, main = "residuals (center mass)")
+  plot(fit.mobility$model$'d$mobility', fit.mobility$residuals, main = "residuals (center mass)", pch = 19, cex = 0.5)
   
   out <- c(
     "ms.model" = ms.model,
