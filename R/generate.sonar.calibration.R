@@ -267,7 +267,8 @@ generate.sonar.calibration <- function(
     warning("the minimum r-squared values is less than 0.995, please consider refining peak detection", '\n')
   }
 
-  plot(fit.mobility$model$'d$mobility', fit.mobility$residuals, main = "residuals (center mass)", pch = 19, cex = 0.5)
+  plot(fit.mobility$model$'d$mobility', fit.mobility$residuals, main = "residuals (center mass)", pch = 19, cex = 0.5, 
+       xlab = "sonar bin", ylab = "residual")
   
   out <- c(
     "ms.model" = ms.model,
