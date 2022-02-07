@@ -14,19 +14,21 @@
 #' @export
 
 remove.sonar.calibration <- function(
-  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_011.raw",
+  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/",
   recursive = FALSE
 ) {
 
-  if(!file.exists(raw.file)) {
-    stop("raw file: ", raw.file, "does not exist")
+  if(tolower(substring(raw.file, first = nchar(raw.file)-2, last = nchar(raw.file))) != 'raw') {
+    raw.file <- list.files(raw.file, pattern = ".raw", ignore.case = TRUE, recursive = recursive, full.names = TRUE)
   }
   
-  if(tolower(substring(raw.file, first = nchar(raw.file)-2, last = nchar(raw.file))) != 'raw') {
-    raw.file <- list.files(raw.file, pattern = ".raw", ignore.case = TRUE, recursive = recursive)
+  if(!all(file.exists(raw.file))) {
+    stop("raw file: ", raw.file[!(file.exists(raw.file))], "does not exist")
   }
   
   for(i in 1:length(raw.file)) {
+    cat(i, '\n')
+    
     h <- readLines(paste0(raw.file[i], "/_HEADER.TXT"))
 
     
@@ -35,40 +37,46 @@ remove.sonar.calibration <- function(
     
     f1 <- method[grep("Function 1", method):(grep("Function 2", method)-1)]
     f1.sonar <- unlist(strsplit(f1[grep("UseSONARMode", f1)], "\t", fixed = TRUE))
+    if(is.null(f1.sonar)) f1.sonar <- FALSE
     f1.sonar <- as.logical(f1.sonar[length(f1.sonar)])
     f2 <- method[grep("Function 2", method):(grep("Function 3", method)-1)]
     f2.sonar <- unlist(strsplit(f2[grep("UseSONARMode", f2)], "\t", fixed = TRUE))
+    if(is.null(f2.sonar)) f2.sonar <- FALSE
     f2.sonar <- as.logical(f2.sonar[length(f2.sonar)])
+    # cat(f1.sonar)
     
     if(!(f1.sonar | f2.sonar)) {
-      next(raw.file[i], "did not use SONAR", '\n')
+      next()
     }
     
     hybrid <-  !(f1.sonar && f2.sonar)
     
-    file.remove(paste0(raw.file[i], "/_sonar.INF"))
+    suppressWarnings(file.remove(paste0(raw.file[i], "/_sonar.INF")))
                 
-    ## if hybrid sonar, we need to calibrate of function 2, which requires some hacking
-    if(hybrid) {
-      # you could move to _func003.cdt and _func003.ind to a separate folder
-      suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
-      file.rename(from = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")),
-                to = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind")))
-      
-      # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
-      #  #Function 1 : 1
-      #  #Function 2 : 1
-      #  #Function 3 : 1
-      types <- suppressWarnings(readLines(paste0(raw.file[i], "/_TYPES.INF")))
-      types[1] <- "#Function 1 : 2"
-      sink(paste0(raw.file[i], "/_TYPES.INF"))
-      cat(paste(types, collapse = '\n'))
-      sink()
-      
-      
-      # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
-      file.remove(paste0(raw.file, c("/_func001.cdt", "/_func001.ind")))
-    }
+    ## if hybrid sonar, undo file hacking
+    # if(hybrid) {
+    #   # you could move to _func003.cdt and _func003.ind to a separate folder
+    #   # suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
+    #   # suppressWarnings(file.rename(from = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")),
+    #   #           to = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind"))))
+    #   # 
+    #   # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
+    #   #  #Function 1 : 1
+    #   #  #Function 2 : 1
+    #   #  #Function 3 : 1
+    #   # if(file.exists(paste0(raw.file[i], "/_TYPES.INF"))) {
+    #   #   types <- suppressWarnings(readLines(paste0(raw.file[i], "/_TYPES.INF")))
+    #   # }
+    #   
+    #   # types[1] <- "#Function 1 : 2"
+    #   # sink(paste0(raw.file[i], "/_TYPES.INF"))
+    #   # cat(paste(types, collapse = '\n'))
+    #   # sink()
+    #   
+    #   
+    #   # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
+    #   # suppressWarnings(file.remove(paste0(raw.file, c("/_func001.cdt", "/_func001.ind"))))
+    # }
     
   }
 }

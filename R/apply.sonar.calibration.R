@@ -133,27 +133,27 @@ apply.sonar.calibration <- function(
     ))))
     
     ## if hybrid sonar, we need to calibrate of function 2, which requires some hacking
-    if(hybrid) {
-      # you could move to _func003.cdt and _func003.ind to a separate folder
-      suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
-      file.rename(from = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind")),
-                to = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")))
-      
-      # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
-      #  #Function 1 : 1
-      #  #Function 2 : 1
-      #  #Function 3 : 1
-      types <- suppressWarnings(readLines(paste0(raw.file[i], "/_TYPES.INF")))
-      types[1] <- "#Function 1 : 1"
-      sink(paste0(raw.file[i], "/_TYPES.INF"))
-      cat(paste(types, collapse = '\n'))
-      sink()
-      
-      
-      # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
-      file.copy(from = paste0(raw.file, c("/_func002.cdt", "/_func002.ind")),
-                to = paste0(raw.file, c("/_func001.cdt", "/_func001.ind")))
-    }
+    # if(hybrid) {
+    #   # you could move to _func003.cdt and _func003.ind to a separate folder
+    #   suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
+    #   file.rename(from = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind")),
+    #             to = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")))
+    #   
+    #   # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
+    #   #  #Function 1 : 1
+    #   #  #Function 2 : 1
+    #   #  #Function 3 : 1
+    #   types <- suppressWarnings(readLines(paste0(raw.file[i], "/_TYPES.INF")))
+    #   types[1] <- "#Function 1 : 1"
+    #   sink(paste0(raw.file[i], "/_TYPES.INF"))
+    #   cat(paste(types, collapse = '\n'))
+    #   sink()
+    #   
+    #   
+    #   # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
+    #   file.copy(from = paste0(raw.file, c("/_func002.cdt", "/_func002.ind")),
+    #             to = paste0(raw.file, c("/_func001.cdt", "/_func001.ind")))
+    # }
     
     
     match.cal <- which(sapply(1:nrow(sonar.cal), FUN = function(x) identical(as.character(current.file[1,]), as.character(sonar.cal[x,names(current.file)]))))

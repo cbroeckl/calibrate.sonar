@@ -1,0 +1,62 @@
+---
+title: "calibrate.sonar"
+author: "Corey Broeckling"
+date: "2/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+SONAR is a form of scanning quadrupole data independent tandem mass spectrometry, valuable for collecting MS/MS data on all precursor ions.  During SONAR aquisition, the quadrupole scans a particular mass range with a mass width over a period of time, first using low collision energy settings, then high collision energy settings.  The low collision energy function is used internally by Waters Software to calibrate the mass isolation window per sonar bin - this provides a more accurate description of the isolation width than the set isolation width - an important consideration when processing DIA MS/MS data.  If users wish to convert the data to an open format, this calibration which waters performs internally must be performed some other way.  Waters provides instructions to do so in a Waters Knowledge Base document: WKB202040.    
+    
+SONAR can also be run as an option from a standard MS1 survey scan.  When the SONAR option is checked, the user can select the mass range, isolation width, scan time, and collision energy. For proteomics application, a SONAR mass range of 400-900 is frequently used, covering 500 Da.  With small molecules, we often have to run a much larger mass range - 50-1200.   The wider the mass range the less time is spent transmitting any given mass, and the lower the sensitivity.  To offset this, we can set an MS1 function which is not SONAR to maximize duty cycle and sensitivity broadly.  We can then set up a function for SONAR MS2 by creating a second MS survey scan, selecting the SONAR option, and setting a high collision energy to induce fragmentation.  We can call this _hybridSONAR_.  This maximizes the MS1 precursor sensitivity while provided selectivity and sensitivy to be tuned specifically to maximize MS/MS data quality.  However, with traditional SONAR, the low collision energy function 1 data can be used to calibrate the function 2 data. With a custom hybridSONAR approach, the calibration must be generated from one file, and applied to others.  
+    
+Calibration is performed by performing signal detection on low collision energy SONAR data, then calibration of detected signal m/z precusor values against sonar isolation bin (0-199).  The calibrate.sonar package enables versatile calibration of SONAR isolation bin range for both traditional SONAR and a custom hybrid-SONAR, where low collision energy SONAR as function 1 is replaced with a standard MS1 survey scan to maximize sensitivity and duty cycle. 
+    
+In hyrbidSONAR, there is no SONAR quadrupole scanning performed at low collision energy.  In the high collision energy SONAR scan, fragmentation generates mass signals that makes calibration challenging and ambiguous.  To enable calibration the user is instructed to generate the SONAR acquisition file where function 1 is an MS survey scan at low collisoin energy.  Function 2 is an MS survey scan, with the 'Sonar' option turned on and parameters set as desired.  Once this file has been saved (MySONARmethod.exp, for example), the user should save a copy (i.e. MySONARmethod_lowCE.exp) where the collision energy is lowered from the original desired setting to 6.  ALL OTHER PARAMETERS MUST REMAIN IDENTICAL. This will result in the file being otherwise identical to the original file, but with low collision energy settings, enabling us to use the MySONARmethod_lowCE.exp method to acquire data, generate a calibration, and apply the calibration to files created by the MySONARmethod.exp method. 
+    
+This package streamlines calibration of traditional SONAR or hybrid SONAR.  The calibration process is executed in a two step process: 
+(1) perform calibration using the 'generate.sonar.calibration' function and 
+(2) apply calibratoin to new data.  In this way each file need not be calibrated anew, we just apply the calibration when the relvent instrument parameters are identical. 
+    
+Once the method has been created, the user should acquire data on a relevent sample using the MySONARmethod_lowCE.exp method and use the 'generate.sonar.calibration' function to create a new calibration which can be saved.  Doing so as a separate step ensures that your method is valid and the calibration quality is good. After this has been done, the user can collect data using the original MySONARmethod.exp method. Of note, the sample composition, LC conditions, and assay run length do not impact the validity of the calibration.   
+    
+The detected calibration can be applied to new data whenever the calibration and new data are collected on the same instrument (serial number), using the same version of MassLynx (including SCN), and the sonar scan time, interscan delay, start mass, stop mass, and quad isolation width settings are identical.  If any of these values change, a new SONAR method with a matching '_low.CE.exp' method should be created. Applying a calibration will not permanently change any of the original data in the .RAW directory _except_ to add/modify _sonar.inf, which contains the calibration and sonar acquisition information.  This file will be recognized by proteowizard to ensure the converted file format (mzML, for example) is appropriately labelled.  
+
+```{r}
+my.cal <- generate.sonar.calibration(
+  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_012.raw",
+  low.energy.function = 2
+)
+apply.sonar.calibration(
+  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_011.raw",
+  sonar.cal = my.cal,
+  recursive = FALSE
+)
+remove.sonar.calibration(raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/")
+
+```
+
+

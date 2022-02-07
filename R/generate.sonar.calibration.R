@@ -21,7 +21,7 @@
 generate.sonar.calibration <- function(
   raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_012.raw",
   apex3d.dir = "C:/Users/cbroeckl/Documents/SONAR/lib",
-  low.energy.function = 2,
+  low.energy.function = 1,
   rt.range = c(2,12),
   cal.out = "cal.out.csv",
   filter = TRUE,
@@ -96,21 +96,16 @@ generate.sonar.calibration <- function(
   ## if hybrid sonar, we need to calibrate of function 2, which requires some hacking
   if(low.energy.function == 2) {
     # you could move to _func003.cdt and _func003.ind to a separate folder
-    suppressWarnings(dir.create(paste0(dirname(raw.file), "/SonarCalTmp")))
-    file.copy(from = paste0(raw.file, c("/_func003.cdt", "/_func003.ind")),
-              to = paste0(dirname(raw.file), "/SonarCalTmp", c("/_func003.cdt", "/_func003.ind")))
-    file.remove(paste0(raw.file, c("/_func003.cdt", "/_func003.ind")))
+    # suppressWarnings(dir.create(paste0(dirname(raw.file), "/SonarCalTmp")))
+    file.rename(from = paste0(raw.file, c("/_func003.cdt", "/_func003.ind")),
+                to = paste0(raw.file, c("/_func003_.cdt", "/_func003_.ind")))
 
-    # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
-    #  #Function 1 : 1
-    #  #Function 2 : 1
-    #  #Function 3 : 1
+    # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file
     types <- suppressWarnings(readLines(paste0(raw.file, "/_TYPES.INF")))
     types[1] <- "#Function 1 : 1"
     sink(paste0(raw.file, "/_TYPES.INF"))
     cat(paste(types, collapse = '\n'))
     sink()
-
 
     # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
     file.copy(from = paste0(raw.file, c("/_func002.cdt", "/_func002.ind")),
@@ -131,7 +126,7 @@ generate.sonar.calibration <- function(
       "-writeBinary 0 -bCSVOutput 1",
       "-leThresholdCounts 2000",
       "-startingRTMin", rt.range[1], "-endingRTMin", rt.range[2],
-      "-function", low.energy.function-1
+      "-function", low.energy.function
     ), show.output.on.console = FALSE
   )
   
@@ -166,30 +161,22 @@ generate.sonar.calibration <- function(
   }
   
   ## if hybrid sonar, unhack hacking
-  ## note that some of this unhacking will prevent pwiz from reading/converting .raw data. 
-  ## this is to establish original data structure in calibration file. 
-  ## files to be calibrated will not have all these steps done.  
+
   if(low.energy.function == 2) {
     # you could move to _func003.cdt and _func003.ind to a separate folder
-    if(!dir.exists(paste0(dirname(raw.file), "/SonarCalTmp"))) {dir.create(paste0(dirname(raw.file), "/SonarCalTmp"))}
-    # moving these back prevents PWiz from reading properly.
-    file.copy(to = paste0(raw.file, c("/_func003.cdt", "/_func003.ind")),
-              from = paste0(dirname(raw.file), "/SonarCalTmp", c("/_func003.cdt", "/_func003.ind")))
-
-    # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
-    #  #Function 1 : 1
-    #  #Function 2 : 1
-    #  #Function 3 : 1
+    # suppressWarnings(dir.create(paste0(dirname(raw.file), "/SonarCalTmp")))
+    file.rename(from = paste0(raw.file, c("/_func003_.cdt", "/_func003_.ind")),
+                to = paste0(raw.file, c("/_func003.cdt", "/_func003.ind")))
+    
+    # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file
     types <- suppressWarnings(readLines(paste0(raw.file, "/_TYPES.INF")))
     types[1] <- "#Function 1 : 2"
     sink(paste0(raw.file, "/_TYPES.INF"))
     cat(paste(types, collapse = '\n'))
     sink()
-
+    
     # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
     file.remove(paste0(raw.file, c("/_func001.cdt", "/_func001.ind")))
-    file.remove(paste0(dirname(raw.file), "/SonarCalTmp", c("/_func003.cdt", "/_func003.ind")))
-    suppressWarnings(file.remove(paste0(dirname(raw.file), "/SonarCalTmp")))
   }
   
   d <- read.csv(
@@ -200,7 +187,7 @@ generate.sonar.calibration <- function(
   
   
   par(mfrow = c(2,1))
-  mtext(paste0(q.start, ":", q.stop, ", width = ", q.width), side = 3, outer = TRUE)
+  
   
   if(filter) {
 
@@ -250,6 +237,8 @@ generate.sonar.calibration <- function(
   intercept.stop <- round(as.numeric(fit.stop$coefficients[1]), digits =5)
   slope.stop <- round(as.numeric(fit.stop$coefficients[2]), digits = 5)
 
+  mtext(paste0(q.start, ":", q.stop, ", width = ", q.width), side = 3, outer = TRUE)
+  
   ## check for consistent slope
   slope.cv <- sd(c(slope.mid, slope.start, slope.stop))/mean(c(slope.mid, slope.start, slope.stop))
   if(slope.cv > 0.05) {
@@ -298,7 +287,7 @@ generate.sonar.calibration <- function(
               paste0(getwd(), "/new.calibration.output.csv"))
       write.csv(out, file = paste0(getwd(), "/new.calibration.output.csv"))
     } else {
-      out <- rbind(out, my.cal)
+      out <- rbind(out, existing)
       write.csv(out, file = cal.out, row.names = FALSE)
       cat("output calibration file supplemented with new calibrations and written: ", '\n',
           cal.out)
