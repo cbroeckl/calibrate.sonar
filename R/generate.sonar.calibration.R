@@ -19,7 +19,7 @@
 #' @export
 
 generate.sonar.calibration <- function(
-  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_012.raw",
+  raw.file = "C:/Users/cbroeckl/Documents/temp/hybridSonarCal.raw",
   apex3d.dir = "C:/Users/cbroeckl/Documents/SONAR/lib",
   low.energy.function = 1,
   rt.range = c(2,12),
@@ -78,8 +78,25 @@ generate.sonar.calibration <- function(
   # "SONARQuadrupoleStopMass\t\t\t\t440.0"
   # "Scan Time (sec)\t\t\t\t\t0.300"
   # "SONARQuadrupolePeakWidth12"
-  method <- method[grep("Function 2", method):(grep("Function 3", method)-1)]
+  method <- method[grep(paste("Function", low.energy.function), method):(grep(paste("Function", (low.energy.function+1)), method)-1)]
   method <- gsub('\t', "", method)
+  
+  ##check that this is a sonar method
+  is.sonar <- method[grep("UseSONARMode", method)]
+  is.sonar <- substr(is.sonar, nchar(is.sonar)-4+1, nchar(is.sonar))
+  if(!is.sonar == "TRUE") {
+    cat(is.sonar, '\n')
+    stop(paste(" - function", low.energy.function, "is not a sonar function", '\n'))
+  }
+  
+  ## check collision energy
+  CE <- method[which(startsWith(method, "Collision Energy"))]
+  CE <- as.numeric(unlist(strsplit(CE, ")"))[2])
+  if(CE > 10) {
+    cat(CE, '\n')
+    warning(paste(" - function", low.energy.function, "used a collion energy of", CE, '\n'))
+  }
+  
   scan.time <- method[grep("Scan Time", method)]
   scan.time <- as.numeric(unlist(strsplit(scan.time, ")"))[2])
   q.start <- method[grep("SONARQuadrupoleStartMass", method)]
@@ -260,6 +277,7 @@ generate.sonar.calibration <- function(
        xlab = "sonar bin", ylab = "residual")
   
   out <- c(
+    "date.time" = paste(Sys.time()),
     "ms.model" = ms.model,
     "ms.serial.number" = ms.serial.number,
     "mass.lynx.version" = mass.lynx.version,
@@ -267,14 +285,15 @@ generate.sonar.calibration <- function(
     "interscan.delay" = interscan.delay,
     "pusher.period" = pusher.period,
     "scan.time" = scan.time,
-    "q.start" = q.start,
-    "q.stop" = q.stop,
-    "intercept.start" = intercept.start,
-    'intercept.mid' = intercept.mid,
-    "intercept.stop" = intercept.stop,
-    "slope.start" = slope.start,
-    "slope.mid" = slope.mid,
-    "slope.stop" = slope.stop
+    "q.start" = round(q.start, digits = 1),
+    "q.stop" = round(q.stop, digits = 1),
+    "q.width" = round(q.width, digits = 1),
+    "intercept.start" = round(intercept.start, digits = 4),
+    'intercept.mid' = round(intercept.mid, digits = 4),
+    "intercept.stop" = round(intercept.stop, digits = 4),
+    "slope.start" = round(slope.start, digits = 4),
+    "slope.mid" = round(slope.mid, digits = 4),
+    "slope.stop" = round(slope.stop, digits = 4)
   )
 
   out <- as.data.frame(t(as.matrix(out)))

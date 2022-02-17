@@ -15,7 +15,7 @@
 #' @export
 
 apply.sonar.calibration <- function(
-  raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_011.raw",
+  raw.file = "C:/Users/cbroeckl/Documents/temp/hybridSonar.raw",
   sonar.cal = my.cal,
   recursive = FALSE
 ) {
@@ -29,13 +29,13 @@ apply.sonar.calibration <- function(
   }
   
   if(!is.data.frame(sonar.cal)) {
-    if(file.exists(my.cal)) {
-      sonar.cal <- read.csv(my.cal)
+    if(file.exists(sonar.cal)) {
+      sonar.cal <- read.csv(sonar.cal)
     }
   }
   
   needed.names <- c("ms.model", "ms.serial.number", "mass.lynx.version", "mass.lynx.scn", 
-                    "interscan.delay", "pusher.period", "scan.time", "q.start", "q.stop", "intercept.start", 
+                    "interscan.delay", "pusher.period", "scan.time", "q.start", "q.stop", "q.width", "intercept.start", 
                     "intercept.mid", "intercept.stop", "slope.start", "slope.mid", 
                     "slope.stop")
   
@@ -128,38 +128,26 @@ apply.sonar.calibration <- function(
       "interscan.delay" = interscan.delay,
       "pusher.period" = pusher.period,
       "scan.time" = scan.time,
-      "q.start" = q.start,
-      "q.stop" = q.stop
+      "q.start" = round(q.start, digits = 1),
+      "q.stop" = round(q.stop, digits = 1),
+      "q.width" = round(q.width, digits = 1)
     ))))
     
-    ## if hybrid sonar, we need to calibrate of function 2, which requires some hacking
-    # if(hybrid) {
-    #   # you could move to _func003.cdt and _func003.ind to a separate folder
-    #   suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
-    #   file.rename(from = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind")),
-    #             to = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")))
-    #   
-    #   # Create a copy of _TYPES.INF and change the content so it mimics an ordinary SONAR/HDMSE file as illustrated below
-    #   #  #Function 1 : 1
-    #   #  #Function 2 : 1
-    #   #  #Function 3 : 1
-    #   types <- suppressWarnings(readLines(paste0(raw.file[i], "/_TYPES.INF")))
-    #   types[1] <- "#Function 1 : 1"
-    #   sink(paste0(raw.file[i], "/_TYPES.INF"))
-    #   cat(paste(types, collapse = '\n'))
-    #   sink()
-    #   
-    #   
-    #   # create copies of _func002.cdt and _func002.ind and rename them to _func001.cdt and _func001.ind.
-    #   file.copy(from = paste0(raw.file, c("/_func002.cdt", "/_func002.ind")),
-    #             to = paste0(raw.file, c("/_func001.cdt", "/_func001.ind")))
-    # }
+    ## if hybrid sonar, we need to calibrate of function 2, which requires some hacking to ensure 
+    ## that the data can be converted and read properly
+    if(hybrid) {
+      # you could move to _func003.cdt and _func003.ind to a separate folder
+      suppressWarnings(dir.create(paste0(dirname(raw.file[i]), "/SonarCalTmp")))
+      file.rename(from = paste0(raw.file[i], c("/_func003.cdt", "/_func003.ind")),
+                to = paste0(raw.file[i], c("/_func003_.cdt", "/_func003_.ind")))
+    }
     
     
     match.cal <- which(sapply(1:nrow(sonar.cal), FUN = function(x) identical(as.character(current.file[1,]), as.character(sonar.cal[x,names(current.file)]))))
-    if(length(match.cal) == 0) {cat(basename(raw.file[i]), ": no calibration available", '\n')}
+    if(length(match.cal) == 0) {cat(basename(raw.file[i]), ": no calibration available with identical acquisition parameters to this file.", '\n')}
     if(length(match.cal) >= 1) {
-      use.cal <- sonar.cal[max(match.cal),]
+      sonar.cal <- sonar.cal[order(sonar.cal[,"date.time"]),]
+      use.cal <- sonar.cal[min(match.cal),]
       cat(basename(raw.file[i]), ": calibration successful", '\n')
       }
     
@@ -182,19 +170,19 @@ apply.sonar.calibration <- function(
     }
     
     ## quad low end cal
-    y.low.1 <- use.cal$slope.start*q.start + use.cal$intercept.start
-    y.mid.1 <- use.cal$slope.mid*q.start + use.cal$intercept.mid
-    y.high.1 <- use.cal$slope.stop*q.start + use.cal$intercept.stop
+    y.low.1 <- round(use.cal$slope.start*q.start + use.cal$intercept.start, digits = 4)
+    y.mid.1 <- round(use.cal$slope.mid*q.start + use.cal$intercept.mid, digits = 4)
+    y.high.1 <- round(use.cal$slope.stop*q.start + use.cal$intercept.stop, digits = 4)
     
     ## quad mid end cal
-    y.low.2 <- use.cal$slope.start*q.mid + use.cal$intercept.start
-    y.mid.2 <- use.cal$slope.mid*q.mid + use.cal$intercept.mid
-    y.high.2 <- use.cal$slope.stop*q.mid + use.cal$intercept.stop
+    y.low.2 <- round(use.cal$slope.start*q.mid + use.cal$intercept.start, digits = 4)
+    y.mid.2 <- round(use.cal$slope.mid*q.mid + use.cal$intercept.mid, digits = 4)
+    y.high.2 <- round(use.cal$slope.stop*q.mid + use.cal$intercept.stop, digits = 4)
     
     ## quad high end cal
-    y.low.3 <- use.cal$slope.start*q.stop + use.cal$intercept.start
-    y.mid.3 <- use.cal$slope.mid*q.stop + use.cal$intercept.mid
-    y.high.3 <- use.cal$slope.stop*q.stop + use.cal$intercept.stop
+    y.low.3 <- round(use.cal$slope.start*q.stop + use.cal$intercept.start, digits = 4)
+    y.mid.3 <- round(use.cal$slope.mid*q.stop + use.cal$intercept.mid, digits = 4)
+    y.high.3 <- round(use.cal$slope.stop*q.stop + use.cal$intercept.stop, digits = 4)
     
     ## insert calculated y values into sonar.inf.out
     sonar.inf.out <- gsub("y.low.1", y.low.1, sonar.inf.out)
