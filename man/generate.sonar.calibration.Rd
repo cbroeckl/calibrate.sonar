@@ -5,14 +5,14 @@
 \title{generate.sonar.calibration}
 \usage{
 generate.sonar.calibration(
- 
-    raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_012.raw",
+  raw.file = "C:/Users/cbroeckl/Documents/temp/hybridSonarCal.raw",
   apex3d.dir = "C:/Users/cbroeckl/Documents/SONAR/lib",
-  low.energy.function = 2,
+  low.energy.function = 1,
   rt.range = c(2, 12),
   cal.out = "cal.out.csv",
   filter = TRUE,
-  filter.range = 0.04
+  filter.range = 0.1,
+  allow.high.energy.calibration = FALSE
 )
 }
 \arguments{
@@ -29,6 +29,8 @@ generate.sonar.calibration(
 \item{filter}{logical.  If TRUE (default), calculate approximate sonar bin to mass relationship based on method settings.  Calculate ratio of actual vs predicted bin and express as a proportion.  1 = perfect prediction. Ratio values outside 1 +/ filter.range value are removed before calibrating.}
 
 \item{filter.range}{numeric. default = 0.1.  Range (as a proportion) of drift bin assignment for filtering.}
+
+\item{allow.high.energy.calibration}{logical If FALSE (default), trying generating a calibration using sonar at high collision energy will generate an error.  If TRUE, only a warning is issued.  Calibrating on high collision energy data comes with risk, and is more likely to be inaccurate.}
 }
 \value{
 returns an R object which is a data from containing calibration information.

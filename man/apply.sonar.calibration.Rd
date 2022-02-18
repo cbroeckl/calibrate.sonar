@@ -5,8 +5,7 @@
 \title{generate.sonar.calibration}
 \usage{
 apply.sonar.calibration(
- 
-    raw.file = "R:/RSTOR-PMF/Projects/Broeckling_Corey/SONAR/20220124-hemp-cal/20210805_MSIMM_LT_1080.PRO/Data/20220124_sonarcaltest_011.raw",
+  raw.file = "C:/Users/cbroeckl/Documents/temp/hybridSonar.raw",
   sonar.cal = my.cal,
   recursive = FALSE
 )

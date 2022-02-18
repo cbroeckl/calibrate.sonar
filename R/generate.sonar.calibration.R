@@ -10,6 +10,7 @@
 #' @param cal.out ile name or path to export CSV file to.  If you have an existing file and want to append the data, enter full file path/name to that file, and new data will be appended to the same csv file.
 #' @param filter logical.  If TRUE (default), calculate approximate sonar bin to mass relationship based on method settings.  Calculate ratio of actual vs predicted bin and express as a proportion.  1 = perfect prediction. Ratio values outside 1 +/ filter.range value are removed before calibrating.
 #' @param filter.range numeric. default = 0.1.  Range (as a proportion) of drift bin assignment for filtering.  
+#' @param allow.high.energy.calibration logical If FALSE (default), trying generating a calibration using sonar at high collision energy will generate an error.  If TRUE, only a warning is issued.  Calibrating on high collision energy data comes with risk, and is more likely to be inaccurate.  
 #' @return returns an R object which is a data from containing calibration information.
 #' @return Additionally exports a .csv file with name defined using the 'cal.out' option.
 #' @concept Waters SONAR
@@ -25,7 +26,8 @@ generate.sonar.calibration <- function(
   rt.range = c(2,12),
   cal.out = "cal.out.csv",
   filter = TRUE,
-  filter.range = 0.1
+  filter.range = 0.1,
+  allow.high.energy.calibration = FALSE
 ) {
 
   if(!file.exists(raw.file)) {
@@ -92,8 +94,11 @@ generate.sonar.calibration <- function(
   ## check collision energy
   CE <- method[which(startsWith(method, "Collision Energy"))]
   CE <- as.numeric(unlist(strsplit(CE, ")"))[2])
-  if(CE > 10) {
+  if(CE >= 10) {
     cat(CE, '\n')
+    if(allow.high.energy.calibration) {
+      stop(paste("Calibration aborted - function", low.energy.function, "used a collion energy of", CE, '\n'))
+    }
     warning(paste(" - function", low.energy.function, "used a collion energy of", CE, '\n'))
   }
   
