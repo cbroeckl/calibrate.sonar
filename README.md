@@ -10,7 +10,7 @@ In hyrbidSONAR, there is no SONAR quadrupole scanning performed at low collision
     
 This package streamlines calibration of traditional SONAR or hybrid SONAR.  The calibration process is executed in a two step process: 
 (1) perform calibration using the 'generate.sonar.calibration' function and 
-(2) apply calibratoin to new data.  In this way each file need not be calibrated anew, we just apply the calibration when the relvent instrument parameters are identical. 
+(2) apply calibration to new data.  In this way each file need not be calibrated anew, we just apply the calibration when the relevent instrument parameters are identical. 
     
 Once the method has been created, the user should acquire data on a relevent sample using the MySONARmethod_lowCE.exp method and use the 'generate.sonar.calibration' function to create a new calibration which can be saved.  Doing so as a separate step ensures that your method is valid and the calibration quality is good. After this has been done, the user can collect data using the original MySONARmethod.exp method. Of note, the sample composition, LC conditions, and assay run length do not impact the validity of the calibration.   
     
